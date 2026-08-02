@@ -4,7 +4,7 @@ import { PhoneShell } from "../components/PhoneShell"
 import { ScoreGauge } from "../components/ScoreGauge"
 import {
   fetchSimulatorResult,
-  getMockDocFeedback,
+  verifyDocument,
   offerTierMeta,
   type SimulatorResult,
   type RequiredDoc,
@@ -22,6 +22,12 @@ const tierBadgeStyle: Record<OfferTier, string> = {
   recommended: "bg-moss text-moss-ink",
   eligible: "border border-mist text-ink/60",
   conditional: "bg-amber-light text-amber",
+}
+
+const resultHintText: Record<DocStatus, string> = {
+  complete: "업로드 완료",
+  processing: "다시 확인이 필요해요",
+  missing: "서류를 다시 확인해주세요",
 }
 
 const ACCEPTED_FILE_TYPES = "image/*,application/pdf"
@@ -55,7 +61,7 @@ export default function Simulator() {
     fileInputRef.current?.click()
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     const docId = activeDocId.current
     e.target.value = ""
@@ -67,20 +73,35 @@ export default function Simulator() {
     }
     setUploadError(null)
 
+    const docLabel = docs.find((doc) => doc.id === docId)?.label ?? docId
+
     setDocs((prev) =>
       prev.map((doc) => (doc.id === docId ? { ...doc, status: "processing", hint: `${file.name} · 인식 중` } : doc)),
     )
 
-    // TODO(backend): await fetch(`${API_BASE}/agents/verification`, { method: "POST", body: formData })
-    setTimeout(() => {
+    try {
+      const result = await verifyDocument(file, docLabel)
       setDocs((prev) =>
         prev.map((doc) =>
           doc.id === docId
-            ? { ...doc, status: "complete", hint: `${file.name} · 업로드 완료`, aiFeedback: getMockDocFeedback(docId) }
+            ? {
+                ...doc,
+                status: result.status,
+                hint: `${file.name} · ${resultHintText[result.status]}`,
+                aiFeedback: result.status === "complete" ? undefined : (result.note ?? undefined),
+              }
             : doc,
         ),
       )
-    }, 1000)
+    } catch {
+      setDocs((prev) =>
+        prev.map((doc) =>
+          doc.id === docId
+            ? { ...doc, status: "missing", hint: `${file.name} · 인식에 실패했어요, 다시 시도해주세요` }
+            : doc,
+        ),
+      )
+    }
   }
 
   return (

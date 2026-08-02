@@ -30,6 +30,7 @@
 
 프론트엔드: Vite + React + TypeScript, Tailwind CSS v4, react-router-dom, lucide-react  
 백엔드: FastAPI (Python), 비동기 처리, 에이전트 오케스트레이션  
+AI: Gemini 3.1 Flash-Lite (전 에이전트 공통, 자세한 역할 분담은 backend/README.md 참고)  
 상태관리: Zustand(전역) + React Query(서버 상태) - 예정  
 다국어: react-i18next - 예정  
 

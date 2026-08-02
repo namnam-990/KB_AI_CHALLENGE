@@ -11,9 +11,19 @@ API_명세서.md 기준으로 구조만 잡아둔 스캐폴드입니다. 모든 
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env             # 값 채워넣기 (JWT_SECRET 등)
+cp .env.example .env             # 값 채워넣기 (JWT_SECRET, GEMINI_API_KEY 등)
 uvicorn app.main:app --reload --port 8000
 ```
+
+## AI 모델
+
+전 서비스 공통으로 **Gemini 3.1 Flash-Lite** (`gemini-3.1-flash-lite`)를 사용합니다.
+모델 ID는 `app/core/config.py`의 `gemini_model` (기본값) / `.env`의 `GEMINI_MODEL`로 override 가능하고,
+API 키는 `.env`의 `GEMINI_API_KEY`에 넣습니다. 공용 클라이언트는 `app/core/gemini.py`.
+
+역할 분담:
+- **승인 시뮬레이터**: 신용점수·승인점수·상품 매칭은 전부 rule-based 유지 (금융 승인 판단은 결정론적으로). 단, 서류 증빙(OCR)만 Gemini 멀티모달로 이미지를 직접 분석.
+- **비자 로드맵 / 귀국 정산 플래너 / 맞춤형 투자 추천**: 설문·거래내역 등 입력을 바탕으로 실제 내용(마일스톤 구성, 고정/변동 소득·지출 분류, 자산 예측, 리스크 등급·자산배분 비율과 근거 문구)을 Gemini가 생성. Gemini 호출 실패 시 기존 정적 목업 값으로 폴백.
 
 `http://localhost:8000/docs`에서 Swagger UI로 모든 엔드포인트를 바로 테스트할 수 있습니다.
 

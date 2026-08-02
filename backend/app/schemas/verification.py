@@ -8,6 +8,7 @@ class VerificationResult(BaseModel):
     status: Literal["complete", "missing", "processing"]
     extractedFields: dict
     standardizedDocUrl: str | None = None
+    note: str | None = None  # 인식 결과에 대한 1줄 코멘트 (문제가 있을 때 특히 유용)
 
 
 class CreditFactor(BaseModel):

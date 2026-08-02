@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me"
     jwt_expire_seconds: int = 3600
     cors_origins: str = "http://localhost:5173"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.1-flash-lite"
 
     class Config:
         env_file = ".env"

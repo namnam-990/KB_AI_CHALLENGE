@@ -11,7 +11,41 @@ class Milestone(BaseModel):
     status: Literal["done", "current", "upcoming"]
 
 
+class RoadmapStage(BaseModel):
+    id: str
+    stepLabel: str
+    title: str
+    subtitle: str
+    milestones: list[Milestone]
+
+
+class RoadmapWrapUpBranch(BaseModel):
+    key: Literal["return", "extend"]
+    label: str
+    description: str
+    actions: list[str]
+
+
+class RoadmapWrapUp(BaseModel):
+    title: str
+    subtitle: str
+    branches: list[RoadmapWrapUpBranch]
+
+
 class RoadmapResult(BaseModel):
     visaType: str
     monthsRemaining: int
-    milestones: list[Milestone]
+    stages: list[RoadmapStage]
+    wrapUp: RoadmapWrapUp
+
+
+class RoadmapSurveyAnswers(BaseModel):
+    visaType: str
+    nationality: str
+    savingsGoals: list[str]
+    plannedDepartureDate: str  # ISO date (YYYY-MM-DD)
+    monthlySavingsAmount: int  # 만원 단위
+
+
+class RoadmapSurveySubmitResult(BaseModel):
+    received: bool = True

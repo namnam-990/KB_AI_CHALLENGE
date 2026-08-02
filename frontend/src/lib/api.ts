@@ -26,15 +26,54 @@ export class ApiError extends Error {
   }
 }
 
+// 로그인 UI가 아직 없어서, 토큰이 없으면 더미 인증정보로 자동 로그인해서 토큰을 확보한다.
+// TODO(backend): 실제 로그인 화면이 생기면 이 자동 로그인 대신 사용자가 직접 로그인하도록 교체
+let pendingLogin: Promise<string> | null = null
+
+async function ensureAuthToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh) {
+    const existing = getAuthToken()
+    if (existing) return existing
+  }
+
+  if (!pendingLogin) {
+    pendingLogin = fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: "010-0000-0000", verificationCode: "000000" }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new ApiError(res.status, "자동 로그인에 실패했어요")
+        return (await res.json()) as { accessToken: string }
+      })
+      .then((data) => {
+        setAuthToken(data.accessToken)
+        return data.accessToken
+      })
+      .finally(() => {
+        pendingLogin = null
+      })
+  }
+  return pendingLogin
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers)
   if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json")
   }
-  const token = getAuthToken()
-  if (token) headers.set("Authorization", `Bearer ${token}`)
+  const token = await ensureAuthToken()
+  headers.set("Authorization", `Bearer ${token}`)
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  let res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+
+  // 저장된 토큰이 만료/무효화된 경우, 한 번 새로 로그인해서 재시도
+  if (res.status === 401) {
+    clearAuthToken()
+    const freshToken = await ensureAuthToken(true)
+    headers.set("Authorization", `Bearer ${freshToken}`)
+    res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "")

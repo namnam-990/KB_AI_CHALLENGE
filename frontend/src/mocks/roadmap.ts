@@ -1,7 +1,9 @@
-// 실제로는 FastAPI의 GET /agents/visa-roadmap 응답으로 교체될 목업 데이터입니다.
+// FastAPI의 GET /agents/visa-roadmap, POST /agents/visa-roadmap/survey 연동.
+
+import { apiFetch } from "../lib/api"
 
 // --- 로드맵 진입 설문 (비자유형 / 국적 / 저축목적) ---
-// 설문 응답은 추후 백엔드로 전송되어 AI 에이전트가 로드맵을 개인화하는 데 사용됩니다.
+// 설문 응답은 백엔드로 전송되어 AI 에이전트가 로드맵을 개인화하는 데 사용됩니다.
 
 export interface VisaTypeOption {
   code: string
@@ -74,16 +76,17 @@ export function clearRoadmapSurvey(): void {
 }
 
 export async function submitRoadmapSurvey(answers: RoadmapSurveyAnswers): Promise<void> {
-  // TODO(backend): await fetch(`${API_BASE}/agents/visa-roadmap/survey`, { method: "POST", body: JSON.stringify(answers) })
+  await apiFetch<{ received: boolean }>("/agents/visa-roadmap/survey", {
+    method: "POST",
+    body: JSON.stringify(answers),
+  })
   localStorage.setItem(SURVEY_STORAGE_KEY, JSON.stringify(answers))
-  await new Promise((r) => setTimeout(r, 300))
 }
 
 // --- 로드맵 결과 ---
 //
 // 로드맵은 4단계 틀(기본 준비 → 저축 → 투자 → 정리)이 고정이고,
-// 그 안의 세부 항목·시기는 추후 AI 에이전트가 신용점수·설문 응답 기반으로 채워 넣습니다.
-// TODO(backend): 아래 stages/wrapUp 전체를 GET /agents/visa-roadmap 응답으로 교체
+// 그 안의 세부 항목·시기는 AI 에이전트가 신용점수·설문 응답 기반으로 채워 넣습니다.
 
 export type MilestoneStatus = "done" | "current" | "upcoming"
 
@@ -124,126 +127,5 @@ export interface RoadmapResult {
 }
 
 export async function fetchRoadmap(): Promise<RoadmapResult> {
-  // TODO(backend): await fetch(`${API_BASE}/agents/visa-roadmap?visaType=E-9`)
-  await new Promise((r) => setTimeout(r, 400))
-
-  return {
-    visaType: "E-9 (비전문취업)",
-    monthsRemaining: 14,
-    stages: [
-      {
-        id: "basic-setup",
-        stepLabel: "STEP 1",
-        title: "기본 준비",
-        subtitle: "계좌 · 카드",
-        milestones: [
-          {
-            id: "s1-1",
-            monthLabel: "완료",
-            title: "입출금 통장 개설",
-            description: "외국인 등록증 인증 후 비대면으로 개설 완료",
-            status: "done",
-          },
-          {
-            id: "s1-2",
-            monthLabel: "완료",
-            title: "체크카드 발급",
-            description: "국내 결제·현금 인출용 기본 카드 발급 완료",
-            status: "done",
-          },
-          {
-            id: "s1-3",
-            monthLabel: "지금",
-            title: "급여이체 자동등록",
-            description: "대안 신용평가 점수 산정에 반영돼요",
-            status: "current",
-          },
-        ],
-      },
-      {
-        id: "savings",
-        stepLabel: "STEP 2",
-        title: "저축",
-        subtitle: "신용 형성 · 목적별 저축",
-        milestones: [
-          {
-            id: "s2-1",
-            monthLabel: "2개월 후",
-            title: "자유적립적금 가입",
-            description: "소액이라도 꾸준히 납입하면 신용점수 형성에 도움돼요",
-            status: "upcoming",
-          },
-          {
-            id: "s2-2",
-            monthLabel: "3개월 후",
-            title: "목적별 적금 가입",
-            description: "설문에서 선택한 저축 목적에 맞는 상품을 추천받아요",
-            status: "upcoming",
-          },
-          {
-            id: "s2-3",
-            monthLabel: "6개월 후",
-            title: "주택청약종합저축 가입",
-            description: "국내 정착을 계획 중이라면 가점 확보에 유리해요",
-            status: "upcoming",
-          },
-        ],
-      },
-      {
-        id: "investment",
-        stepLabel: "STEP 3",
-        title: "투자",
-        subtitle: "증권 · 채권 (전원 공통)",
-        milestones: [
-          {
-            id: "s3-1",
-            monthLabel: "8개월 후",
-            title: "증권계좌(CMA) 개설",
-            description: "여유자금을 낮은 리스크로 굴려보는 첫 단계예요",
-            status: "upcoming",
-          },
-          {
-            id: "s3-2",
-            monthLabel: "10개월 후",
-            title: "국채 · 채권형 상품 소액 투자",
-            description: "원금 손실 위험이 낮은 상품부터 시작해요",
-            status: "upcoming",
-          },
-          {
-            id: "s3-3",
-            monthLabel: "12개월 후",
-            title: "ETF 분산 투자 시작",
-            description: "목표 금액과 남은 기간에 맞춰 투자 비중을 조정해요",
-            status: "upcoming",
-          },
-        ],
-      },
-    ],
-    wrapUp: {
-      title: "정리",
-      subtitle: "귀국 또는 체류 연장에 따라 달라져요",
-      branches: [
-        {
-          key: "return",
-          label: "귀국하는 경우",
-          description: "설문에서 입력한 귀국 예정일 기준으로 정산을 준비해요",
-          actions: [
-            "귀국 정산 플래너에서 환전 · 송금 계획 확인",
-            "퇴직연금 반환일시금 신청",
-            "예적금 만기일 조정 또는 해지",
-          ],
-        },
-        {
-          key: "extend",
-          label: "체류를 연장하는 경우",
-          description: "비자 연장에 맞춰 다음 로드맵을 새로 준비해요",
-          actions: [
-            "비자 연장 서류 준비 (재직증명서 · 소득증빙)",
-            "신용점수 재점검 후 상품 재추천",
-            "다음 단계 로드맵 자동 갱신",
-          ],
-        },
-      ],
-    },
-  }
+  return apiFetch<RoadmapResult>("/agents/visa-roadmap")
 }
