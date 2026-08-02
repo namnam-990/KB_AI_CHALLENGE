@@ -82,12 +82,3 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
-
-export async function checkApiHealth(): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE}/health`)
-    return res.ok
-  } catch {
-    return false
-  }
-}

@@ -11,7 +11,8 @@ export interface InvestProduct {
 }
 
 export async function fetchInvestRecommendations(risk: RiskLevel): Promise<InvestProduct[]> {
-  // TODO(backend): await fetch(`${API_BASE}/agents/invest-recommend`, { method: "POST", body: JSON.stringify({ risk }) })
+  // TODO(backend): await fetch(`${API_BASE}/invest/recommend`, { method: "POST", body: JSON.stringify({ riskLevel: risk }) })
+  // 주의: `/agents/invest-recommend`는 국적+설문 기반 "맞춤형 투자 추천"(personalizedInvest.ts) 전용 엔드포인트라 이 페이지와는 다름
   await new Promise((r) => setTimeout(r, 500))
 
   if (risk === "low") {

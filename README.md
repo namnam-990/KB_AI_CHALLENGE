@@ -9,84 +9,125 @@
 - 실제 병목은 채널이 아니라 서류 증빙(22~24%)과 정보 비대칭(지인 의존 16%)
 - KB 계열사(은행·증권·카드) 전반에서 신원확인만 필요한 서비스는 비대면화됐지만, 신용평가가 얽힌 서비스는 외국인을 명시적으로 배제하는 동일한 패턴 확인
 
-자세한 근거는 /docs/기획서.docx 참고.
-
 ## 핵심 서비스
 
 공통 인프라 (모든 서비스의 기반)
-- 증빙 자동화 에이전트: 서류 사진을 은행 표준 양식으로 자동 변환
-- 대안 신용평가 에이전트: 비금융 데이터 기반 신용점수 산출
-- 다국어 설명 에이전트: 실시간 용어 설명
+- 증빙 자동화 에이전트: 서류 사진/PDF를 Gemini 멀티모달로 직접 읽어 은행 표준 필드로 추출
+- 대안 신용평가 에이전트: 비금융 데이터 기반 신용점수 산출 (현재 고정값, 실 로직 예정)
+- 다국어 설명 에이전트: 실시간 용어 설명 (챗봇, 예정)
 
-차별화 핵심 서비스 3종
+차별화 핵심 서비스 4종
 - 대출·카드 승인 시뮬레이터
 - 비자별 맞춤 로드맵
 - 귀국 정산 플래너
+- 맞춤형 투자 추천 (국적별 투자성향 + 투자성향 설문 기반)
 
 기본 골격 서비스
 - 입출금 계좌 / 예·적금 / 카드 / 대출 / 증권계좌 / 해외송금 / 환전 / 투자 추천
 
 ## 기술 스택
 
-프론트엔드: Vite + React + TypeScript, Tailwind CSS v4, react-router-dom, lucide-react  
-백엔드: FastAPI (Python), 비동기 처리, 에이전트 오케스트레이션  
-AI: Gemini 3.1 Flash-Lite (전 에이전트 공통, 자세한 역할 분담은 backend/README.md 참고)  
-상태관리: Zustand(전역) + React Query(서버 상태) - 예정  
-다국어: react-i18next - 예정  
+프론트엔드: Vite + React + TypeScript, Tailwind CSS v4, react-router-dom, lucide-react
+백엔드: FastAPI (Python), 비동기 처리, 에이전트 오케스트레이션
+AI: Gemini 3.1 Flash-Lite (전 에이전트 공통, 역할 분담은 backend/README.md 참고)
+상태관리: Zustand(전역) + React Query(서버 상태) - 예정
+다국어: 지금은 한국어 고정. 확장 계획은 하단 "다국어 확장 계획" 참고
 
 ## 실행 방법
 
+프론트엔드
+```bash
+cd frontend
 npm install
 npm run dev
-
+```
 http://localhost:5173 접속. 모바일 프레임 안에 렌더링되므로 브라우저 창 크기와 무관하게 모바일 UI로 보입니다.
+
+백엔드 (자세한 내용은 backend/README.md 참고)
+```bash
+cd backend
+python -m venv ../.venv && ../.venv/Scripts/activate   # Windows
+pip install -r requirements.txt
+cp .env.example .env   # GEMINI_API_KEY 채워넣기
+uvicorn app.main:app --reload --port 8000
+```
 
 ## 라우트 구조
 
-/                 홈 (대시보드, 서비스 진입)  
-/onboarding       계좌개설 온보딩  
-/chat             다국어 금융지식 챗봇  
+/                    홈 (대시보드, 서비스 진입)
+/onboarding          계좌개설 온보딩 (프론트만, 백엔드 미연동)
+/chat                다국어 금융지식 챗봇 (프론트만, 백엔드 미연동)
 
-/simulator        핵심1 대출·카드 승인 시뮬레이터  
-/roadmap          핵심2 비자별 맞춤 로드맵  
-/exit-plan        핵심3 귀국 정산 플래너  
+/simulator            핵심1 대출·카드 승인 시뮬레이터 — 백엔드 연동 완료 (rule-based)
+/roadmap              핵심2 비자별 맞춤 로드맵 — 백엔드 연동 완료 (Gemini)
+/exit-plan            핵심3 귀국 정산 플래너 — 백엔드 연동 완료 (Gemini)
+/personalized-invest  핵심4 맞춤형 투자 추천 — 백엔드 연동 완료 (Gemini)
 
-/accounts         입출금 계좌  
-/deposits         예·적금  
-/cards            카드  
-/loans            대출  
-/securities       증권계좌  
-/remittance       해외송금  
-/exchange         환전  
-/invest           투자 추천  
+/accounts, /deposits, /cards, /loans, /securities, /remittance, /exchange, /invest
+  기본 골격 8종 — 프론트만, 백엔드 미연동
 
 ## 폴더 구조
 
-src/components/PhoneShell.tsx : 모바일 프레임 + 하단 탭바  
-src/components/ScoreGauge.tsx : 원형 승인점수 게이지  
-src/pages/Home.tsx  
-src/pages/Onboarding.tsx  
-src/pages/Chat.tsx  
-src/pages/Simulator.tsx  
-src/pages/Roadmap.tsx  
-src/pages/ExitPlan.tsx  
-src/pages/Accounts.tsx, Deposits.tsx, Cards.tsx, Loans.tsx  
-src/pages/Securities.tsx, Remittance.tsx, Exchange.tsx, Invest.tsx  
-src/mocks/ : 페이지별 목업 데이터 (백엔드 연동 지점)  
+src/lib/api.ts : 공용 API 헬퍼 (자동 로그인, 401 자동 재시도, apiFetch)
+src/components/PhoneShell.tsx : 모바일 프레임 + 하단 탭바
+src/components/ScoreGauge.tsx : 원형 승인점수 게이지
+src/pages/ : 페이지별 컴포넌트 (라우트 구조와 1:1 대응)
+src/mocks/ : 페이지별 타입 + fetch 함수. 백엔드 연동된 4개는 실제 apiFetch 호출, 나머지는 아직 setTimeout 목업
+
+## 지금까지 구현된 것
+
+- 프론트 15개 페이지 UI 전부 구현
+- 백엔드 FastAPI 스캐폴드, JWT 인증, 4개 핵심 서비스 + 증빙 자동화 실제 로직 연동
+- 승인 시뮬레이터: 신용점수 구간별 대출/카드 상품 매칭 (rule-based, AI 미사용 — 의도적 설계)
+- 비자 로드맵: 설문(비자유형/국적/저축목적/귀국예정일/월저축액) 기반으로 Gemini가 마일스톤·정리 안내를 개인화 생성
+- 귀국 정산 플래너: mock 거래내역을 Gemini가 고정/변동 소득·지출로 분류, 자산 예측 — 합계 금액은 코드가 직접 계산(LLM 다단계 암산 오차 방지)
+- 맞춤형 투자 추천: 국적(로드맵 설문에서 재사용) + 투자성향 설문 6문항 기반으로 Gemini가 리스크등급·자산배분·근거 문구 생성
+- 증빙 자동화: 서류 사진/PDF를 Gemini 멀티모달로 직접 읽어 필드 추출 (별도 OCR 엔진 없음)
+- 위 4개 기능 전부 결과 캐싱 — 같은 입력이면 탭 이동/재방문해도 재계산 안 됨
+- 로그인 UI가 없어서 프론트가 더미 계정으로 자동 로그인, 토큰 만료 시 자동 재로그인
+
+## 앞으로 할 일 (TODO)
+
+### 백엔드 우선순위
+1. DB 연동 — `backend/app/db/models.py`가 아직 비어있어서, 설문/캐시가 전부 프로세스 메모리에만 저장됨 (서버 재시작하면 초기화)
+2. 대안 신용평가 엔진 실제 구현 (`services/credit_agent.py`) — 지금은 고정 60점이라 승인 시뮬레이터 결과가 항상 동일
+3. 기본 골격 8종 서비스(`services/banking_service.py`) 실제 로직
+4. 다국어 챗봇 실제 RAG 연동 (`services/rag_chat_agent.py`)
+5. 실 로그인 UI + 온보딩 백엔드 연동
+
+### 프론트엔드
+- [ ] 기본 골격 8종 페이지(계좌/예적금/카드/대출/증권/송금/환전/투자) 백엔드 연동
+- [ ] 온보딩, 챗봇 백엔드 연동
+- [ ] 하단 탭바에 전체 페이지 진입 경로 정리 (지금은 4개만 노출)
+- [ ] 로딩/에러 상태 공통 컴포넌트화 (지금은 페이지마다 중복 작성됨)
+- [ ] 반응형 최종 점검 (실제 모바일 기기 폭 기준)
+
+### 기타
+- [ ] 다국어 지원 (아래 "다국어 확장 계획" 참고)
+- [ ] 발표용 데모 시나리오 스크립트
+- [ ] 배포 (프론트: Vercel / 백엔드: Railway 등)
+
+## 다국어 확장 계획
+
+지금은 한국어로 고정되어 있습니다. 이 앱 콘텐츠는 두 종류로 나뉘어서, 확장 방식도 다르게 접근할 계획입니다.
+
+- **정적 UI 텍스트** (버튼, 라벨, 안내 문구): react-i18next 같은 정적 번역 틀로 처리. 문자열 수가 많지 않아 상대적으로 빠르게 적용 가능.
+- **AI 생성 콘텐츠** (로드맵 마일스톤, 귀국정산 분석, 투자추천 근거 문구 등): 이미 Gemini가 매번 생성하는 구조라, 정적 번역 파일을 따로 만드는 것보다 **각 서비스의 프롬프트에 사용자 언어(`language`) 파라미터를 추가해서 Gemini가 해당 언어로 직접 생성**하게 하는 방식이 훨씬 적은 작업으로 훨씬 자연스러운 결과를 냄. 온보딩에서 이미 선택받는 언어(`supportedLanguages`)를 사용자 프로필에 저장해두었다가 이 파라미터로 넘기면 됨.
+- 우선순위: 정적 텍스트보다 AI 생성 콘텐츠 다국어가 실제 사용자 임팩트가 커서, 프롬프트 파라미터화부터 먼저 진행 예정.
 
 ## 목업에서 실제 백엔드 연동으로 전환하는 방법
 
-src/mocks 각 파일의 fetchXxx 함수 안에 있는 TODO(backend) 주석 위치를 실제 FastAPI 엔드포인트 호출로 바꾸면 됩니다. 함수의 입출력 타입은 그대로 유지되어 있어 페이지 컴포넌트는 수정할 필요가 없습니다.
+`src/mocks` 각 파일의 `fetchXxx` 함수 안에 있는 `TODO(backend)` 주석 위치를 실제 FastAPI 엔드포인트 호출(`apiFetch`, `src/lib/api.ts`)로 바꾸면 됩니다. 함수의 입출력 타입은 그대로 유지되어 있어 페이지 컴포넌트는 수정할 필요가 없습니다. (핵심 4종 + 증빙 자동화는 이미 전환 완료, 기본 골격 8종 + 온보딩 + 챗봇은 아직 남음)
 
 ## 디자인 톤
 
-메인 컬러: KB 브랜드 노란색 #FFCC08 (KB 심볼인 별에서 비롯된 색, K-Bee 캠페인과 연결되는 브랜드 컬러)  
+메인 컬러: KB 브랜드 노란색 #FFCC08 (KB 심볼인 별에서 비롯된 색, K-Bee 캠페인과 연결되는 브랜드 컬러)
 
-강조/hover: #C79A00  
-어두운 텍스트/보더: #3e3832  
-배경: warm paper #F6F3EC  
-확인 필요 상태: 앰버 계열  
-위험 또는 부족 상태: 코랄 계열  
+강조/hover: #C79A00
+어두운 텍스트/보더: #3e3832
+배경: warm paper #F6F3EC
+확인 필요 상태: 앰버 계열
+위험 또는 부족 상태: 코랄 계열
 
-색상과 폰트 값은 src/index.css의 theme 블록에서 한번에 관리합니다.  
-노란 배경 위 텍스트는 흰색이 아니라 #3e3832 계열의 어두운 색을 사용해 대비를 확보합니다.  
+색상과 폰트 값은 src/index.css의 theme 블록에서 한번에 관리합니다.
+노란 배경 위 텍스트는 흰색이 아니라 #3e3832 계열의 어두운 색을 사용해 대비를 확보합니다.
