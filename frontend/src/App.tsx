@@ -13,6 +13,7 @@ import Loans from "./pages/Loans"
 import Securities from "./pages/Securities"
 import Exchange from "./pages/Exchange"
 import Invest from "./pages/Invest"
+import PersonalizedInvest from "./pages/PersonalizedInvest"
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/securities" element={<Securities />} />
         <Route path="/exchange" element={<Exchange />} />
         <Route path="/invest" element={<Invest />} />
+        <Route path="/personalized-invest" element={<PersonalizedInvest />} />
       </Routes>
     </BrowserRouter>
   )

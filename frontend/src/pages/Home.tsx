@@ -3,6 +3,7 @@ import {
   Gauge,
   Map,
   Luggage,
+  Sparkles,
   ArrowRight,
   Wallet,
   PiggyBank,
@@ -35,6 +36,12 @@ const cards = [
     icon: Luggage,
     title: "귀국 정산 플래너",
     desc: "퇴직금부터 자산 반출까지 한번에 정리해요",
+  },
+  {
+    to: "/personalized-invest",
+    icon: Sparkles,
+    title: "맞춤형 투자 추천",
+    desc: "국적별 투자성향과 투자성향 설문을 반영해 AI가 추천해요",
   },
 ]
 
