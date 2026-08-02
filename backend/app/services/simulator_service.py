@@ -149,7 +149,7 @@ async def run_loan_simulator(user_id: str, product_type: str) -> SimulatorResult
 
     if product_type == "loan":
         return SimulatorResult(
-            productName="외국인 전세자금대출",
+            productName="",
             approvalScore=approval_score,
             approvalLabel="승인 가능성 높음" if approval_score >= 70 else "보완 필요",
             altCreditScore=alt_credit_score,
@@ -183,7 +183,7 @@ async def run_loan_simulator(user_id: str, product_type: str) -> SimulatorResult
         )
 
     return SimulatorResult(
-        productName="KB 외국인 체크·신용카드",
+        productName="",
         approvalScore=approval_score,
         approvalLabel="승인 가능성 높음" if approval_score >= 70 else "신용카드는 보완 필요",
         altCreditScore=alt_credit_score,
